@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Encoder</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        color: #333;
+        overflow-x: hidden;
+      }
+
+      .background-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+            circle at 20% 50%,
+            rgba(120, 119, 198, 0.3) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 20%,
+            rgba(255, 119, 198, 0.3) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 40% 80%,
+            rgba(120, 219, 255, 0.3) 0%,
+            transparent 50%
+          );
+        z-index: -1;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+        position: relative;
+        z-index: 1;
+      }
+
+      .main-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 3rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1),
+          0 8px 25px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        animation: fadeInUp 0.8s ease-out;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+      }
+
+      .header p {
+        color: #6b7280;
+        font-size: 1.1rem;
+        margin-bottom: 0;
+      }
+
+      .form-group {
+        margin-bottom: 2rem;
+      }
+
+      .form-label {
+        display: block;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+      }
+
+      .file-upload-area {
+        position: relative;
+        border: 2px dashed #d1d5db;
+        border-radius: 16px;
+        padding: 3rem;
+        text-align: center;
+        background: linear-gradient(145deg, #f8fafc, #f1f5f9);
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .file-upload-area:hover {
+        border-color: #667eea;
+        background: linear-gradient(145deg, #f0f4ff, #e8f2ff);
+        transform: translateY(-2px);
+      }
+
+      .file-upload-area.dragover {
+        border-color: #667eea;
+        background: linear-gradient(145deg, #f0f4ff, #e8f2ff);
+        transform: scale(1.02);
+      }
+
+      .file-upload-icon {
+        font-size: 3rem;
+        color: #9ca3af;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+      }
+
+      .file-upload-area:hover .file-upload-icon {
+        color: #667eea;
+        transform: scale(1.1);
+      }
+
+      .file-upload-text {
+        color: #6b7280;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .file-upload-subtext {
+        color: #9ca3af;
+        font-size: 0.9rem;
+      }
+
+      .file-input {
+        position: absolute;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+      }
+
+      .selected-file {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: rgba(103, 126, 234, 0.1);
+        border-radius: 12px;
+        border-left: 4px solid #667eea;
+      }
+
+      .selected-file-name {
+        font-weight: 600;
+        color: #667eea;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .form-select {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 1rem;
+        background: white;
+        transition: all 0.3s ease;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 1rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+      }
+
+      .form-select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(103, 126, 234, 0.1);
+      }
+
+      .format-options {
+        display: none;
+        animation: slideDown 0.3s ease-out;
+      }
+
+      .format-options.show {
+        display: block;
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .process-btn {
+        width: 100%;
+        padding: 1.25rem 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 16px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .process-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(103, 126, 234, 0.4);
+      }
+
+      .process-btn:active {
+        transform: translateY(0);
+      }
+
+      .process-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .result-section {
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 2px solid #f3f4f6;
+        animation: fadeInUp 0.6s ease-out;
+      }
+
+      .result-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 2rem;
+      }
+
+      .result-header h3 {
+        color: #1f2937;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+      }
+
+      .success-icon {
+        color: #10b981;
+        font-size: 1.5rem;
+      }
+
+      .video-container {
+        background: #000;
+        border-radius: 16px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      }
+
+      .video-player {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      .download-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 2rem;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        text-decoration: none;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+      }
+
+      .download-btn:hover {
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+      }
+
+      .processing-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+
+      .processing-content {
+        text-align: center;
+        color: white;
+      }
+
+      .spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 1rem;
+        }
+
+        .main-card {
+          padding: 2rem;
+          border-radius: 16px;
+        }
+
+        .header h1 {
+          font-size: 2rem;
+        }
+
+        .file-upload-area {
+          padding: 2rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="background-overlay"></div>
+
+    <div class="container">
+      <div class="main-card">
+        <div class="header">
+          <h1><i class="fas fa-video"></i> Video Encoder</h1>
+          <p>Transform your videos with professional encoding tools</p>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" id="encoderForm">
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fas fa-upload"></i> Upload Video File
+            </label>
+            <div class="file-upload-area" id="fileUploadArea">
+              <input
+                type="file"
+                name="video"
+                class="file-input"
+                id="videoInput"
+                accept="video/*"
+                required
+              />
+              <div class="file-upload-icon">
+                <i class="fas fa-cloud-upload-alt"></i>
+              </div>
+              <div class="file-upload-text">
+                Drag & drop your video here or click to browse
+              </div>
+              <div class="file-upload-subtext">
+                Supported formats: MP4, AVI, MKV, MOV, WMV
+              </div>
+            </div>
+            <div class="selected-file" id="selectedFile" style="display: none">
+              <div class="selected-file-name">
+                <i class="fas fa-file-video"></i>
+                <span id="fileName"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">
+              <i class="fas fa-cog"></i> Select Encoding Operation
+            </label>
+            <select
+              class="form-select"
+              name="option"
+              id="operationSelect"
+              required
+            >
+              <option value="">Choose an operation...</option>
+              <option value="intra">🎬 Intra-frame Encoding</option>
+              <option value="inter">🔄 Inter-frame Encoding</option>
+              <option value="convert">📹 Convert Video Format</option>
+              <option value="compress">📦 Compress Video</option>
+            </select>
+          </div>
+
+          <div class="form-group format-options" id="formatOptions">
+            <label class="form-label">
+              <i class="fas fa-exchange-alt"></i> Target Format
+            </label>
+            <select class="form-select" name="format">
+              <option value="">Select format...</option>
+              <option value="mp4">📱 MP4 (Recommended)</option>
+              <option value="avi">🖥️ AVI</option>
+              <option value="mkv">🎭 MKV</option>
+              <option value="mov">🍎 MOV</option>
+            </select>
+          </div>
+
+          <button type="submit" class="process-btn" id="processBtn">
+            <i class="fas fa-play"></i> Start Processing
+          </button>
+        </form>
+
+        <!-- Hasil akan ditampilkan di sini jika menggunakan template engine -->
+        {% if result %}
+        <div class="result-section">
+          <div class="result-header">
+            <i class="fas fa-check-circle success-icon"></i>
+            <h3>Processing Complete!</h3>
+          </div>
+
+          <div class="video-container">
+            <video controls class="video-player">
+              <source
+                src="{{ url_for('static', filename='output/' + result) }}"
+                type="video/mp4"
+              />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+
+          <a
+            href="{{ url_for('download_file', filename=result) }}"
+            class="download-btn"
+          >
+            <i class="fas fa-download"></i>
+            Download Processed Video
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="processing-overlay" id="processingOverlay">
+      <div class="processing-content">
+        <div class="spinner"></div>
+        <h3>Processing your video...</h3>
+        <p>This may take a few moments depending on file size</p>
+      </div>
+    </div>
+
+    <script>
+      // File upload handling
+      const fileUploadArea = document.getElementById("fileUploadArea");
+      const videoInput = document.getElementById("videoInput");
+      const selectedFile = document.getElementById("selectedFile");
+      const fileName = document.getElementById("fileName");
+      const operationSelect = document.getElementById("operationSelect");
+      const formatOptions = document.getElementById("formatOptions");
+      const form = document.getElementById("encoderForm");
+      const processBtn = document.getElementById("processBtn");
+      const processingOverlay = document.getElementById("processingOverlay");
+
+      // Drag and drop functionality
+      fileUploadArea.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.add("dragover");
+      });
+
+      fileUploadArea.addEventListener("dragleave", () => {
+        fileUploadArea.classList.remove("dragover");
+      });
+
+      fileUploadArea.addEventListener("drop", (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.remove("dragover");
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          videoInput.files = files;
+          showSelectedFile(files[0]);
+        }
+      });
+
+      // File input change
+      videoInput.addEventListener("change", (e) => {
+        if (e.target.files.length > 0) {
+          showSelectedFile(e.target.files[0]);
+        }
+      });
+
+      function showSelectedFile(file) {
+        fileName.textContent = file.name;
+        selectedFile.style.display = "block";
+      }
+
+      // Operation change handler
+      operationSelect.addEventListener("change", () => {
+        const selectedValue = operationSelect.value;
+
+        if (selectedValue === "convert") {
+          formatOptions.classList.add("show");
+        } else {
+          formatOptions.classList.remove("show");
+        }
+      });
+
+      // Form submission
+      form.addEventListener("submit", (e) => {
+        // Show processing overlay
+        processingOverlay.style.display = "flex";
+        processBtn.disabled = true;
+
+        // Note: In real implementation, you might want to handle this differently
+        // This is just for visual feedback
+      });
+
+      // Add some interactive animations
+      document.querySelectorAll(".form-select").forEach((select) => {
+        select.addEventListener("focus", () => {
+          select.parentElement.style.transform = "translateY(-2px)";
+        });
+
+        select.addEventListener("blur", () => {
+          select.parentElement.style.transform = "translateY(0)";
+        });
+      });
+
+      // Add click effect to buttons
+      processBtn.addEventListener("mousedown", () => {
+        processBtn.style.transform = "translateY(0) scale(0.98)";
+      });
+
+      processBtn.addEventListener("mouseup", () => {
+        processBtn.style.transform = "translateY(-2px) scale(1)";
+      });
+    </script>
+  </body>
+</html>
