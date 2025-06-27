@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Steganografi Video</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+        color: #333;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+        position: relative;
+      }
+
+      .home-btn {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .home-btn:hover {
+        transform: translateY(-50%) translateY(-2px);
+        box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+      }
+
+      h1 {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-size: 2.5em;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+
+      .subtitle {
+        color: #666;
+        font-size: 1.1em;
+        font-weight: 300;
+      }
+
+      .section {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+      }
+
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 25px;
+        font-size: 1.4em;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .icon {
+        font-size: 1.5em;
+        padding: 10px;
+        border-radius: 10px;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        min-width: 50px;
+        text-align: center;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      label {
+        font-weight: 600;
+        color: #555;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      input[type="file"] {
+        padding: 15px;
+        border: 2px dashed #ddd;
+        border-radius: 10px;
+        background: #f9f9f9;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 14px;
+      }
+
+      input[type="file"]:hover {
+        border-color: #667eea;
+        background: #f0f4ff;
+      }
+
+      textarea {
+        padding: 15px;
+        border: 2px solid #e1e5e9;
+        border-radius: 10px;
+        font-family: inherit;
+        font-size: 14px;
+        resize: vertical;
+        transition: all 0.3s ease;
+        background: #fafafa;
+      }
+
+      textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .btn {
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 30px;
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn.decode {
+        background: linear-gradient(45deg, #11998e 0%, #38ef7d 100%);
+        box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3);
+      }
+
+      .btn.decode:hover {
+        box-shadow: 0 6px 20px rgba(17, 153, 142, 0.4);
+      }
+
+      .result {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 15px;
+        margin-top: 20px;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+      }
+
+      .result h3 {
+        margin-bottom: 20px;
+        font-size: 1.3em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .message {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+        padding: 25px;
+        border-radius: 15px;
+        margin-top: 20px;
+        box-shadow: 0 10px 30px rgba(17, 153, 142, 0.3);
+      }
+
+      .message h3 {
+        margin-bottom: 15px;
+        font-size: 1.3em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .message p {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 15px;
+        border-radius: 10px;
+        font-size: 16px;
+        word-break: break-all;
+      }
+
+      video {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 10px;
+        margin: 15px 0;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
+
+      .download-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
+      .download-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px);
+      }
+
+      .divider {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #ddd, transparent);
+        margin: 40px 0;
+        border: none;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 20px;
+          margin: 10px;
+        }
+
+        .home-btn {
+          position: static;
+          transform: none;
+          margin-bottom: 20px;
+          align-self: flex-start;
+        }
+
+        .header {
+          margin-bottom: 30px;
+        }
+
+        h1 {
+          font-size: 2em;
+        }
+
+        .section {
+          padding: 20px;
+        }
+
+        .section-title {
+          font-size: 1.2em;
+        }
+      }
+
+      /* Loading animation */
+      .loading {
+        display: none;
+        text-align: center;
+        margin-top: 20px;
+      }
+
+      .spinner {
+        border: 3px solid rgba(102, 126, 234, 0.3);
+        border-radius: 50%;
+        border-top: 3px solid #667eea;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <a href="{{ url_for('index') }}" class="home-btn">
+          🏠 Kembali ke Home
+        </a>
+        <h1>🔒 Steganografi Video</h1>
+        <p class="subtitle">
+          LSB Frame Pertama - Sembunyikan & Ekstrak Pesan Rahasia
+        </p>
+      </div>
+
+      <div class="section">
+        <div class="section-title">
+          <div class="icon">🔐</div>
+          <span>Sisipkan Pesan ke Video</span>
+        </div>
+        <form method="POST" enctype="multipart/form-data" id="encodeForm">
+          <div class="form-group">
+            <label>Pilih File Video</label>
+            <input type="file" name="video" accept="video/*" required />
+          </div>
+          <div class="form-group">
+            <label>Pesan Rahasia</label>
+            <textarea
+              name="secret"
+              placeholder="Masukkan pesan rahasia yang ingin disembunyikan..."
+              rows="4"
+              required
+            ></textarea>
+          </div>
+          <button type="submit" name="action" value="encode" class="btn">
+            🔐 Encode Pesan
+          </button>
+        </form>
+        <div class="loading" id="encodeLoading">
+          <div class="spinner"></div>
+          <p>Sedang memproses video...</p>
+        </div>
+      </div>
+
+      {% if result %}
+      <div class="result">
+        <h3>✅ Video berhasil disisipkan pesan!</h3>
+        <video controls>
+          <source
+            src="{{ url_for('static', filename='output/' + result) }}"
+            type="video/mp4"
+          />
+          Browser Anda tidak mendukung pemutaran video.
+        </video>
+        <a
+          href="{{ url_for('download_file', filename=result) }}"
+          class="download-btn"
+        >
+          📥 Download Video
+        </a>
+      </div>
+      {% endif %}
+
+      <hr class="divider" />
+
+      <div class="section">
+        <div class="section-title">
+          <div class="icon">🔍</div>
+          <span>Ekstrak Pesan dari Video</span>
+        </div>
+        <form method="POST" enctype="multipart/form-data" id="decodeForm">
+          <div class="form-group">
+            <label>Pilih File Video</label>
+            <input type="file" name="video" accept="video/*" required />
+          </div>
+          <button type="submit" name="action" value="decode" class="btn decode">
+            🔍 Decode Pesan
+          </button>
+        </form>
+        <div class="loading" id="decodeLoading">
+          <div class="spinner"></div>
+          <p>Sedang mengekstrak pesan...</p>
+        </div>
+      </div>
+
+      {% if message %}
+      <div class="message">
+        <h3>📩 Pesan berhasil ditemukan!</h3>
+        <p><strong>{{ message }}</strong></p>
+      </div>
+      {% endif %}
+    </div>
+
+    <script>
+      // Show loading animation when forms are submitted
+      document
+        .getElementById("encodeForm")
+        .addEventListener("submit", function () {
+          document.getElementById("encodeLoading").style.display = "block";
+        });
+
+      document
+        .getElementById("decodeForm")
+        .addEventListener("submit", function () {
+          document.getElementById("decodeLoading").style.display = "block";
+        });
+
+      // File input preview
+      const fileInputs = document.querySelectorAll('input[type="file"]');
+      fileInputs.forEach((input) => {
+        input.addEventListener("change", function (e) {
+          if (e.target.files.length > 0) {
+            const fileName = e.target.files[0].name;
+            const fileSize = (e.target.files[0].size / 1024 / 1024).toFixed(2);
+
+            // Create or update file info display
+            let fileInfo = input.parentNode.querySelector(".file-info");
+            if (!fileInfo) {
+              fileInfo = document.createElement("div");
+              fileInfo.className = "file-info";
+              fileInfo.style.cssText = `
+                margin-top: 8px;
+                padding: 8px 12px;
+                background: #e8f4fd;
+                border-radius: 6px;
+                font-size: 13px;
+                color: #2563eb;
+              `;
+              input.parentNode.appendChild(fileInfo);
+            }
+            fileInfo.innerHTML = `📹 ${fileName} (${fileSize} MB)`;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

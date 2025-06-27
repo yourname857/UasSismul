@@ -1,10 +1,11 @@
 import os
-import uuid
 
 from flask import Flask, render_template, request, send_file
+from werkzeug.utils import secure_filename
 
-from utils import (compress_video, convert_format, encode_inter_frame,
-                   encode_intra_frame)
+from utils import (compress_video, convert_format, embed_message_in_video,
+                   encode_inter_frame, encode_intra_frame,
+                   extract_message_from_video)
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -21,29 +22,65 @@ def index():
         option = request.form['option']
         output_format = request.form.get('format')
 
-        original_name = os.path.splitext(video.filename)[0]
-        file_ext = '.mp4' if option != 'convert' else f'.{output_format}'
+        filename = secure_filename(video.filename)
+        video_path = os.path.join(UPLOAD_FOLDER, filename)
+        video.save(video_path)
+
+        original_name, _ = os.path.splitext(filename)
+        file_ext = f'.{output_format}' if option == 'convert' and output_format else '.mp4'
         output_filename = f"{original_name}_{option}{file_ext}"
         output_path = os.path.join(OUTPUT_FOLDER, output_filename)
 
-        video_path = os.path.join(UPLOAD_FOLDER, video.filename)
-        video.save(video_path)
-
         try:
-            if option == 'intra':
+            if option == 'compress':
+                compress_video(video_path, output_path)
+            elif option == 'convert' and output_format:
+                convert_format(video_path, output_path)
+            elif option == 'intra':
                 encode_intra_frame(video_path, output_path)
             elif option == 'inter':
                 encode_inter_frame(video_path, output_path)
-            elif option == 'convert' and output_format:
-                convert_format(video_path, output_path, output_format)
-            elif option == 'compress':
-                compress_video(video_path, output_path)
-        except Exception as e:
-            return f"Terjadi kesalahan: {str(e)}"
+            else:
+                return "Opsi tidak valid atau belum didukung."
 
-        return render_template('index.html', result=output_filename)
+            return render_template('index.html', result=output_filename)
+        except Exception as e:
+            return f"Terjadi kesalahan saat memproses video: {str(e)}"
 
     return render_template('index.html', result=None)
+
+@app.route('/steganografi', methods=['GET', 'POST'])
+def steganografi():
+    encoded_path = None
+    decoded_message = None
+
+    if request.method == 'POST':
+        if 'encode' in request.form:
+            video = request.files['video']
+            secret = request.form['secret']
+            filename = secure_filename(video.filename)
+            input_path = os.path.join(UPLOAD_FOLDER, filename)
+            video.save(input_path)
+
+            output_filename = f"encoded_{filename}"
+            output_path = os.path.join(OUTPUT_FOLDER, output_filename)
+            try:
+                embed_message_in_video(input_path, secret, output_path)
+                encoded_path = output_filename
+            except Exception as e:
+                return f"Error encoding: {str(e)}"
+
+        elif 'decode' in request.form:
+            video = request.files['video']
+            filename = secure_filename(video.filename)
+            input_path = os.path.join(UPLOAD_FOLDER, filename)
+            video.save(input_path)
+            try:
+                decoded_message = extract_message_from_video(input_path)
+            except Exception as e:
+                return f"Error decoding: {str(e)}"
+
+    return render_template('steganografi.html', result=encoded_path, message=decoded_message)
 
 @app.route('/download/<filename>')
 def download_file(filename):

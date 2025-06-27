@@ -1,3 +1,7 @@
 Flask
 ffmpeg-python
 gunicorn
+opencv-python
+numpy
+moviepy
+imageio-ffmpeg
